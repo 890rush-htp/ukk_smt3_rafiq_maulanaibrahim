@@ -1,5 +1,6 @@
 export const userSelect = {
   id: true,
+  kode: true,
   fullname: true,
   email: true,
   role: true,
@@ -9,6 +10,7 @@ export const userSelect = {
 
 type UserRow = {
   id: number
+  kode: string
   fullname: string
   email: string
   role: string

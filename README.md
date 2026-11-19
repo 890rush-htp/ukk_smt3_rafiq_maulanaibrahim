@@ -61,39 +61,114 @@ Akun admin: `admin@gmail.com` / `123456` (ganti sebelum project dipakai di serve
 
 
 
+<!-- 
+# README: Project `ukk-smt4`
 
-<!-- ---
+Panel admin Next.js 16 (Turbopack) + Prisma 7 + MySQL/MariaDB (XAMPP).
 
-## Daftar isi
+| Item | Nilai |
+|---|---|
+| Folder project | `D:\ukk_smt4\ukk-smt4` |
+| Database | `db_ukksmt3_rafiq` (tabel `users`, `categories`, `jurusan`) |
+| Akun admin | `admin@gmail.com` / `12345678` (kode `adm0001`) |
+| Alamat lokal | http://localhost:3000 |
 
-1. [Sidebar tidak muncul](#1-sidebar-tidak-muncul)
-2. [Build error `lib/prisma.ts`](#2-build-error-libprismats)
-3. [Prisma versi 8 RC diganti ke 7](#3-prisma-versi-8-rc-diganti-ke-7)
-4. [Mematikan database sementara](#4-mematikan-database-sementara)
-5. [Menyembunyikan item menu & shortcut comment](#5-menyembunyikan-item-menu--shortcut-comment)
-6. [Error `Unexpected token '<' ... is not valid JSON`](#6-error-unexpected-token---is-not-valid-json)
-7. [Build error `add-data-dialog.tsx`](#7-build-error-add-data-dialogtsx)
-8. [Mengembalikan koneksi database (Prisma 7)](#8-mengembalikan-koneksi-database-prisma-7)
-9. [`npm install` di folder yang salah](#9-npm-install-di-folder-yang-salah)
-10. [Login selalu "Email atau password salah"](#10-login-selalu-email-atau-password-salah)
-11. [Error `cookies()` / Cache Components & `next.config`](#11-error-cookies--cache-components--nextconfig)
-12. [Tidak bisa logout](#12-tidak-bisa-logout)
-13. [Peringatan lain yang tidak berbahaya](#13-peringatan-lain-yang-tidak-berbahaya)
-14. [Kondisi akhir & checklist](#14-kondisi-akhir--checklist)
+Dokumen ini berisi: **(A)** cara download/instal (npm & npx), **(B)** cara menjalankan, **(C)** semua masalah yang pernah muncul beserta solusinya, **(D)** checklist.
 
 ---
 
-## 1. Sidebar tidak muncul
+## A. Download & instal (npm / npx)
 
-**Gejala:** halaman `/admin/...` tampil polos, tanpa sidebar dan header.
+### A1. Yang harus ada dulu
+- **Node.js** (LTS) dan **npm**. Cek: `node -v` dan `npm -v`
+- **XAMPP** (MySQL/MariaDB) dan **VS Code**
+- **Git** (kalau mau clone/push ke GitHub)
 
-**Penyebab:** komponen `AdminShell` (yang memuat `Sidebar` + `Header`) tidak dipakai di mana pun. Tidak ada `app/admin/layout.tsx`.
+### A2. Ambil project
+Dari GitHub:
+```bat
+git clone https://github.com/USERNAME/ukk-smt4.git
+cd ukk-smt4
+```
+Atau dari zip: ekstrak, lalu buka terminal **di folder yang berisi `package.json`**.
 
-**Solusi:** buat `app/admin/layout.tsx`. `AdminUserProvider` harus membungkus `AdminShell`, karena `Header` memakai `useAdminUser()`.
+> **Cek prompt terminal sebelum `npm install`.** Harus berakhiran `\ukk-smt4>`.
+> Kalau dijalankan di folder induk (`D:\ukk_smt4>`), paketnya terpasang di tempat yang salah.
 
+### A3. Instal semua paket project
+```bat
+npm install
+```
+
+### A4. Instal Prisma 7 (urutan ini)
+```bat
+npm install -D -E prisma@7.10.1
+npm install -E @prisma/client@7.10.1 @prisma/adapter-mariadb@7.10.1 dotenv
+```
+- `-D` = devDependencies, `-E` = versi persis (tanpa `^`).
+- Semua paket Prisma harus **versi yang sama (7.10.1)**.
+- `dotenv` wajib karena Prisma 7 tidak membaca `.env` sendiri.
+- Jangan pakai `prisma@latest` atau versi 8 RC.
+
+Izinkan script instal Prisma (kalau npm memberi peringatan `allow-scripts`):
+```bat
+npm approve-scripts prisma
+npm approve-scripts @prisma/engines
+```
+
+### A5. Perintah `npx` yang dipakai
+| Perintah | Fungsi | Catatan |
+|---|---|---|
+| `npx prisma generate` | membuat Prisma Client (`src/generated/prisma`) | wajib setelah `schema.prisma` berubah, dan setelah clone/instal baru |
+| `npx prisma db pull` | membaca tabel dari database ke `schema.prisma` | pakai kalau tabel sudah ada |
+| `npx prisma db push` | membuat/mengubah tabel dari `schema.prisma` | **jangan** dipakai kalau tabel sudah dibuat dari SQL |
+| `npx prisma studio` | melihat data di browser | opsional |
+
+### A6. Buat file `.env` (di root, sejajar `package.json`)
+```
+DATABASE_URL="mysql://root:@127.0.0.1:3306/db_ukksmt3_rafiq"
+JWT_SECRET="isi-dengan-string-acak-yang-panjang"
+```
+Buat `JWT_SECRET` acak:
+```bat
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+Kalau MySQL pakai password: `mysql://root:PASSWORD@127.0.0.1:3306/...` (karakter khusus ditulis URL-encoded, mis. `@` jadi `%40`).
+Setelah mengubah `.env`, **hentikan lalu jalankan ulang** `npm run dev`.
+
+### A7. Siapkan database
+1. Nyalakan **MySQL** di XAMPP Control Panel (tombol **Start** sampai hijau).
+2. phpMyAdmin → tab **Import** → pilih `db_ukksmt3_rafiq.sql` → **Go**.
+   File itu sudah membuat database, tabel `users`, `categories`, `jurusan`, dan akun admin `adm0001`.
+3. Jangan jalankan `prisma db push` setelah import.
+
+### A8. Generate dan jalankan
+```bat
+npx prisma generate
+npm run dev
+```
+Buka http://localhost:3000 lalu login `admin@gmail.com` / `12345678`.
+
+Perintah npm lain: `npm run build` (build produksi), `npm run start` (jalankan hasil build), `npm run lint`.
+
+---
+
+## B. Cara jalan sehari-hari
+1. Nyalakan MySQL di XAMPP.
+2. Buka terminal di `D:\ukk_smt4\ukk-smt4` (cek prompt).
+3. `npm run dev`
+4. Hentikan server: `Ctrl + C` (kalau muncul `Terminate batch job (Y/N)?` ketik `y`).
+5. Kalau tampilan/route aneh setelah banyak edit: hentikan server, jalankan `rmdir /s /q .next`, lalu `npm run dev`.
+
+---
+
+## C. Masalah & solusi
+
+### C1. Sidebar tidak muncul
+**Penyebab:** `AdminShell` (berisi Sidebar + Header) tidak dipakai di mana pun. Tidak ada `app/admin/layout.tsx`.
+**Solusi:** buat `app/admin/layout.tsx`. `AdminUserProvider` harus membungkus `AdminShell` (Header memakai `useAdminUser()`).
 ```tsx
 import type { ReactNode } from "react";
-
 import { AdminShell } from "@/app/components/sidebar/admin-shell";
 import { AdminUserProvider } from "@/components/admin/admin-user-provider";
 
@@ -105,126 +180,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   );
 }
 ```
+Menu yang masih bermasalah kalau halamannya belum dibuat: `/admin` (butuh `app/admin/page.tsx`), `categories` (file 0 byte), `jurusan` (folder kosong), `profile` (belum ada).
 
-**Masalah turunan yang ditemukan di menu:**
-
-| Menu | Masalah | Solusi |
-|---|---|---|
-| Dashboard (`/admin`) | tidak ada `app/admin/page.tsx` (isi dashboard masih di `app/page.tsx`) | pindahkan ke `app/admin/page.tsx` |
-| Categories | `app/admin/categories/page.tsx` 0 byte, Next error | isi minimal dengan `export default function ...` |
-| Jurusan | folder kosong, 404 | buat `page.tsx` |
-| Profile | halaman belum ada | buat `app/admin/profile/page.tsx` |
-
----
-
-## 2. Build error `lib/prisma.ts`
-
-**Gejala:** `Expected ';', '}' or <eof>` di `lib/prisma.ts` baris `port: Number(...)`.
-
-**Penyebab:** file setengah ter-comment. Baris `const adapter = new PrismaMariaDb({` di-comment, tapi isi objeknya (`host`, `port`, ...) masih aktif. Bagian `globalForPrisma` juga ter-comment padahal dipakai di bawah.
-
-**Solusi:** comment SEMUA baris atau aktifkan SEMUANYA. Jangan setengah-setengah. Versi lengkap ada di [bagian 8](#8-mengembalikan-koneksi-database-prisma-7).
-
----
-
-## 3. Prisma versi 8 RC diganti ke 7
-
-**Penyebab:** `package.json` berisi `"prisma": "^8.0.0-rc.34"`, yaitu release candidate, bukan versi stabil.
-
-**Solusi:** pakai Prisma 7.10.1 (versi 7 stabil terbaru saat itu), semua paket dengan versi yang sama. Lihat [bagian 8](#8-mengembalikan-koneksi-database-prisma-7).
-
----
-
-## 4. Mematikan database sementara
-
-Dulu database sempat dimatikan karena belum mau langsung terhubung ke DB. Hanya `lib/auth.ts` yang memakai Prisma, jadi cukup:
-
-- `lib/prisma.ts`: comment semua barisnya, tambahkan `export {}` di akhir.
-- `lib/auth.ts`: ganti isinya jadi fungsi `getAuthenticatedUser()` yang mengembalikan user contoh (`id`, `fullname`, `email`, `role`).
-
-Sekarang database sudah dinyalakan lagi (bagian 8), jadi catatan ini hanya untuk arsip.
-
----
-
-## 5. Menyembunyikan item menu & shortcut comment
-
-**Sembunyikan item sidebar:** comment barisnya di `lib/admin-menu.ts`, atau tambahkan properti `hidden?: boolean` lalu filter di `sidebar.tsx`:
-
-```tsx
-{adminMenu.filter((item) => !item.hidden).map(...)}
-```
-
-Menyembunyikan menu tidak memblokir URL-nya. Halaman tetap bisa dibuka lewat alamat.
-
-**Shortcut VS Code:**
-
-| Aksi | Windows | Mac |
-|---|---|---|
-| Comment / uncomment baris | `Ctrl + /` | `Cmd + /` |
-| Comment blok `/* ... */` | `Shift + Alt + A` | `Shift + Option + A` |
-| Sembunyikan sidebar VS Code | `Ctrl + B` | `Cmd + B` |
-
----
-
-## 6. Error `Unexpected token '<' ... is not valid JSON`
-
-**Penyebab:** halaman `user-management` dan form user memanggil `fetch("/api/users")` dan membaca `response.json()`, tapi route API-nya tidak ada. Yang kembali halaman HTML 404, bukan JSON.
-
-**Solusi:** buat route di `app/api/users/route.ts` (GET, POST) dan `app/api/users/[id]/route.ts` (GET, PATCH, DELETE). Versi final memakai Prisma (bagian 8). Dulu sempat dibuat versi mock di memori (`lib/mock-users.ts`), tapi sudah tidak dipakai dan boleh dihapus.
-
----
-
-## 7. Build error `add-data-dialog.tsx`
-
-**Gejala:** `Expected '}', got '<eof>'` di `components/admin/add-data-dialog.tsx`.
-
-**Penyebab:** fungsi `AddDataDialog` kurang `}` penutup di akhir file.
-
-**Solusi:**
-
-```tsx
-    </Dialog>
-  );
-}   // <-- tambahkan baris ini
-```
-
----
-
-## 8. Mengembalikan koneksi database (Prisma 7)
-
-### Langkah
-
-Jalankan di `D:\ukk_smt4\ukk-smt4`:
-
-```bat
-npm install -D -E prisma@7.10.1
-npm install -E @prisma/client@7.10.1 @prisma/adapter-mariadb@7.10.1 dotenv
-npm approve-scripts prisma
-npm approve-scripts @prisma/engines
-npx prisma generate
-npm run dev
-```
-
-(`dotenv` wajib karena Prisma 7 tidak membaca `.env` sendiri.)
-
-### `.env` (di root, sejajar `package.json`)
-
-```
-DATABASE_URL="mysql://root:@127.0.0.1:3306/ukk_smt3_rafiq"
-JWT_SECRET="isi-string-acak-yang-panjang"
-```
-
-Buat secret acak: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
-Setelah mengubah `.env`, hentikan `npm run dev` (Ctrl+C) lalu jalankan lagi.
-
-### `lib/prisma.ts`
-
+### C2. Build error `lib/prisma.ts` ("Expected ';', '}' or <eof>")
+**Penyebab:** file setengah ter-comment (baris `new PrismaMariaDb({` di-comment tapi isinya tidak).
+**Solusi:** comment semua atau aktifkan semua. Versi aktif:
 ```ts
 import { PrismaMariaDb } from "@prisma/adapter-mariadb"
 import { PrismaClient } from "@/src/generated/prisma/client"
 
 const databaseUrl = process.env.DATABASE_URL
-
 if (!databaseUrl) {
   throw new Error("DATABASE_URL belum diatur di file .env")
 }
@@ -241,80 +206,20 @@ const adapter = new PrismaMariaDb({
 })
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
-
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter })
-
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma
 }
 ```
+Kalau database dimatikan sementara: comment semua baris itu + tambah `export {}`, dan buat `getAuthenticatedUser()` mengembalikan user contoh.
 
-### `prisma.config.ts` (di root)
+### C3. Prisma versi 8 RC
+**Penyebab:** `package.json` berisi `"prisma": "^8.0.0-rc..."` (release candidate).
+**Solusi:** pasang 7.10.1 (lihat A4).
 
-```ts
-import "dotenv/config"
-import { defineConfig, env } from "prisma/config"
-
-export default defineConfig({
-  schema: "prisma/schema.prisma",
-  migrations: { path: "prisma/migrations" },
-  datasource: { url: env("DATABASE_URL") },
-})
-```
-
-### `lib/auth.ts` (versi asli, memakai database)
-
-```ts
-import { cookies } from "next/headers"
-import { prisma } from "@/lib/prisma"
-import { verifyUserJwt } from "@/lib/user-security"
-
-export async function getAuthenticatedUser() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get("auth_token")?.value
-
-  if (!token) return null
-
-  const payload = verifyUserJwt(token)
-  if (!payload) return null
-
-  const userId = Number(payload.sub)
-  if (!Number.isSafeInteger(userId) || userId < 1) return null
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, fullname: true, email: true, role: true, token: true },
-  })
-
-  if (!user || user.token !== token) return null
-
-  const { token: _token, ...authenticatedUser } = user
-  return authenticatedUser
-}
-```
-
-### File lain yang dibuat
-
-- `lib/user-dto.ts`: `userSelect`, `toUserDto()`, `isPrismaError()`
-- `app/api/users/route.ts` dan `app/api/users/[id]/route.ts`: CRUD user dengan Prisma, semuanya mengecek `getAuthenticatedUser()` dulu (401 kalau belum login)
-- Hapus `lib/mock-users.ts` (sisa versi mock)
-
-### Tambahan
-
-- Tambahkan `/src/generated` ke `.gitignore`.
-- Kalau `schema.prisma` berubah, jalankan lagi `npx prisma generate`.
-- Jangan jalankan `npx prisma db push` kalau tabel sudah berisi data penting dan schema belum dicek.
-
----
-
-## 9. `npm install` di folder yang salah
-
-**Gejala:** hasil install cuma "136 packages", dan prompt terminal `D:\ukk_smt4>` (tanpa `\ukk-smt4`).
-
-**Penyebab:** perintah dijalankan di folder induk, bukan di folder project. Prisma terpasang di tempat yang salah.
-
+### C4. `npm install` di folder yang salah
+**Gejala:** hasil instal cuma ±136 paket, prompt `D:\ukk_smt4>` (tanpa `\ukk-smt4`).
 **Solusi:**
-
 ```bat
 cd D:\ukk_smt4
 rmdir /s /q node_modules
@@ -324,18 +229,36 @@ npm install -D -E prisma@7.10.1
 npm install -E @prisma/client@7.10.1 @prisma/adapter-mariadb@7.10.1 dotenv
 ```
 
-Aturan praktis: selalu cek prompt terminal sebelum `npm install`. Harus berakhiran `...\ukk-smt4>`, tempat `package.json` berada.
+### C5. `Unexpected token '<' ... is not valid JSON`
+**Penyebab:** halaman memanggil `fetch("/api/users")`, tapi route API tidak ada, jadi yang kembali HTML 404.
+**Solusi:** buat `app/api/users/route.ts` dan `app/api/users/[id]/route.ts` (CRUD user dengan Prisma, lihat paket `kode-user.zip` / file `route.ts`).
 
----
+### C6. Build error `add-data-dialog.tsx` ("Expected '}', got '<eof>'")
+**Penyebab:** fungsi `AddDataDialog` kurang `}` penutup.
+**Solusi:** tambah `}` di baris paling bawah setelah `);`.
 
-## 10. Login selalu "Email atau password salah"
+### C7. Login selalu "Email atau password salah"
+Langkah pencarian: tambah log sementara di `app/api/auth/login/route.ts`:
+```ts
+console.log("[LOGIN] user ditemukan:", Boolean(user))
+console.log("[LOGIN] password cocok:", isValid)
+```
+| Status di terminal | Arti |
+|---|---|
+| `401` | kode jalan, akun ditolak |
+| `404` | file route tidak ada di path itu |
+| `500` | error Prisma / `JWT_SECRET` / koneksi DB |
 
-Ini masalah paling panjang. Urutan temuannya:
+**Penyebab yang ditemukan:** `schema.prisma` memetakan model `User` ke tabel **`users`** (`@@map("users")`), sedangkan akun admin dibuat di tabel **`tbl_users`**. Prisma membaca tabel yang kosong (`user ditemukan: false`).
+**Solusi:** isi akun ke tabel `users`. Password harus berupa hash `scrypt:salt:digest`, bukan teks biasa (lihat C16 untuk membuat hash).
 
-### a) Route login
+Error phpMyAdmin saat itu:
+| Error | Penyebab | Solusi |
+|---|---|---|
+| `#1064 ... near '5 VALUES'` | ada angka nyasar di antara `)` dan `VALUES` | hapus isi kotak SQL, tempel ulang, atau pakai tab **Import** |
+| `#1062 Duplicate entry 'admin@gmail.com'` | baris sudah ada | pakai `UPDATE`, bukan `INSERT` |
 
-Route login yang benar di `app/api/auth/login/route.ts` (pakai `verifyUserPassword`, bukan membandingkan teks biasa):
-
+Route login yang benar (pakai `verifyUserPassword`, bukan membandingkan teks biasa):
 ```ts
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
@@ -371,79 +294,14 @@ export async function POST(request: Request) {
   return response
 }
 ```
+Setelah beres, hapus semua `console.log("[LOGIN] ...")`.
 
-### b) Penyebab sebenarnya
-
-Log debug menunjukkan `user ditemukan: false`, padahal akun ada di phpMyAdmin.
-
-- Akun admin dibuat di tabel **`tbl_users`** (dari file SQL pertama).
-- Tapi `schema.prisma` memetakan model `User` ke tabel **`users`** (`@@map("users")`).
-- Prisma membaca `users` yang kosong, bukan `tbl_users`.
-
-**Petunjuk membaca log:**
-
-| Status | Arti |
-|---|---|
-| `401` | kode login jalan, tapi akun ditolak |
-| `404` | file route tidak ada di path yang dipanggil |
-| `500` | error Prisma / `JWT_SECRET` / koneksi DB |
-
-Logika debug yang dipakai (tempel sementara, hapus setelah beres):
-
-```ts
-console.log("[LOGIN] user ditemukan:", Boolean(user))
-console.log("[LOGIN] password cocok:", isValid)
-```
-
-### c) Solusi: isi akun ke tabel `users`
-
-Schema dibiarkan, akun dimasukkan ke tabel `users`. Kolom `updated_at` wajib diisi manual di SQL karena `@updatedAt` hanya bekerja lewat Prisma.
-
-```sql
-INSERT INTO users (fullname, email, password, role, created_at, updated_at)
-VALUES ('Admin', 'admin@gmail.com', 'scrypt:64f873f73de983585f65d9f6cf650dee:7f274b1fc071208871585c6e599e8791da53db75d42630bfbd67c32fdd96470a375908a051256d9926bae2935f78641a7c9830d812e1b98b6467c2055c49470e', 'admin', NOW(3), NOW(3));
-```
-
-Hash di atas = password `123456` dalam format `scrypt:salt:digest`, sama dengan `hashUserPassword()` di `lib/user-security.ts`.
-
-### d) Error phpMyAdmin yang muncul saat itu
-
-| Error | Penyebab | Solusi |
-|---|---|---|
-| `#1064 ... near '5 VALUES'` | ada angka `5` nyasar antara `)` dan `VALUES` | hapus semua isi kotak SQL lalu tempel ulang, atau pakai tab **Import** |
-| `#1062 Duplicate entry 'admin@gmail.com'` | baris admin sudah ada | jangan INSERT lagi, pakai UPDATE di bawah |
-
-```sql
-UPDATE users
-SET password = 'scrypt:64f873f73de983585f65d9f6cf650dee:7f274b1fc071208871585c6e599e8791da53db75d42630bfbd67c32fdd96470a375908a051256d9926bae2935f78641a7c9830d812e1b98b6467c2055c49470e',
-    role = 'admin', token = NULL, updated_at = NOW(3)
-WHERE email = 'admin@gmail.com';
-```
-
-Cek database mana yang sebenarnya dibaca: `SELECT DATABASE() AS db, id, email, role FROM users;` (harus `ukk_smt3_rafiq`).
-
-Tabel `tbl_users` sekarang tidak dipakai dan boleh dihapus.
-
----
-
-## 11. Error `cookies()` / Cache Components & `next.config`
-
-### a) Error `cookies()` di `/admin`
-
-**Gejala:** `Route "/admin": Next.js encountered runtime data during prerendering` dengan petunjuk ke `getAuthenticatedUser` (`lib/auth.ts`). Terminal juga menulis `Cache Components enabled` dan `Partial Prefetching enabled`.
-
-**Penyebab:** mode Cache Components di Next 16 mewajibkan `cookies()` dibungkus `<Suspense>`. `layout.tsx` memanggil `getAuthenticatedUser()` (yang memanggil `cookies()`) langsung.
-
+### C8. Error `cookies()` / Cache Components dan `next.config` rusak
+**Gejala:** `Route "/admin": ... runtime data during prerendering`, dan terminal menulis `Cache Components enabled`.
+**Penyebab:** mode Cache Components mewajibkan `cookies()` dibungkus `<Suspense>`.
 **Solusi:** matikan `cacheComponents` dan `partialPrefetching`.
 
-### b) `next.config.ts` rusak
-
-**Gejala:** `Failed to load next.config.ts ... Unexpected token '}'` dan `Cannot find name 'NextConfig'`.
-
-**Penyebab:** edit sebagian membuat isi file campuran, baris `import type { NextConfig }` hilang dan kurung tidak seimbang.
-
-**Solusi:** ganti dengan `next.config.mjs` yang tidak butuh import tipe (hapus `next.config.ts` supaya tidak ada dua file config):
-
+Kalau `next.config.ts` rusak ("Unexpected token '}'" atau "Cannot find name 'NextConfig'"), ganti dengan `next.config.mjs` (hapus `next.config.ts` supaya tidak ada dua config):
 ```js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -459,25 +317,15 @@ const nextConfig = {
 
 export default nextConfig;
 ```
-
-Lalu bersihkan cache dan jalankan ulang:
-
 ```bat
 del next.config.ts
 rmdir /s /q .next
 npm run dev
 ```
 
-Pastikan di terminal tidak ada lagi baris `Cache Components enabled`.
-
----
-
-## 12. Tidak bisa logout
-
-**Penyebab:** tidak ada route logout dan tidak ada tombolnya sama sekali.
-
-### Route: `app/api/auth/logout/route.ts`
-
+### C9. Logout + dropdown avatar
+**Penyebab tidak bisa logout:** tidak ada route logout dan tombolnya.
+**Route** `app/api/auth/logout/route.ts`:
 ```ts
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
@@ -488,15 +336,11 @@ export async function POST() {
   const cookieStore = await cookies()
   const token = cookieStore.get("auth_token")?.value
 
-  // Kosongkan token di database supaya token lama tidak bisa dipakai lagi
   if (token) {
     const payload = verifyUserJwt(token)
     const userId = Number(payload?.sub)
     if (Number.isSafeInteger(userId) && userId > 0) {
-      await prisma.user.updateMany({
-        where: { id: userId, token },
-        data: { token: null },
-      })
+      await prisma.user.updateMany({ where: { id: userId, token }, data: { token: null } })
     }
   }
 
@@ -506,16 +350,12 @@ export async function POST() {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 0, // hapus cookie
+    maxAge: 0,
   })
   return response
 }
 ```
-
-### Tombol: di dalam menu avatar (`app/components/navigation-menu/header.tsx`)
-
-Avatar "AD" dibuat menjadi dropdown (komponen `dropdown-menu` shadcn) berisi nama/email, **Profile**, dan **Keluar**. Inti logikanya:
-
+**Tombol:** di `app/components/navigation-menu/header.tsx`, avatar dibuat dropdown berisi Profile dan Keluar. Inti handler:
 ```tsx
 async function handleLogout() {
   setIsLoggingOut(true);
@@ -527,66 +367,209 @@ async function handleLogout() {
   }
 }
 ```
+**Error `Base UI: MenuGroupContext is missing`:** `dropdown-menu.tsx` memakai Base UI. Perbaikan:
+- Bungkus `DropdownMenuLabel` dengan `<DropdownMenuGroup>...</DropdownMenuGroup>` (tambah `DropdownMenuGroup` ke import).
+- Ganti `onSelect` menjadi `onClick` di semua `DropdownMenuItem`.
 
-Tes: klik avatar, pilih **Keluar**, lalu buka `/admin` langsung. Harus dilempar balik ke `/`.
-Kalau sebelumnya sempat menambahkan tombol Keluar di `sidebar.tsx`, hapus supaya tidak dobel.
+### C10. `P2039 pool failed to retrieve a connection` dan warning font Geist
+- **P2039 (login `500`):** MySQL belum menyala atau belum siap. Nyalakan MySQL di XAMPP **sebelum** `npm run dev`. Boleh tambah `connectTimeout: 10000, acquireTimeout: 15000` di adapter (hapus kalau TypeScript menolak).
+- **`Failed to download Geist from Google Fonts`:** hanya warning karena internet timeout (membuat halaman pertama lambat). Hapus import `Geist` dari `app/layout.tsx` kalau tidak dibutuhkan.
 
----
+### C11. Hydration mismatch (`/admin/category` vs `/admin/categories`)
+**Penyebab:** cache `.next` tidak sinkron dengan `lib/admin-menu.ts` yang baru diubah.
+**Solusi:** hentikan server, `rmdir /s /q .next`, `npm run dev`.
 
-## 13. Peringatan lain yang tidak berbahaya
+### C12. Judul tab "Profile Company" dan ikon tab
+Ubah `title` di `metadata` pada `app/layout.tsx`:
+```tsx
+export const metadata: Metadata = {
+  title: "ukk-smt4",
+  description: "Panel admin ukk-smt4",
+};
+```
+Ikon tab: ganti `app/favicon.ico`. Refresh dengan `Ctrl + F5`.
 
-| Peringatan | Arti / tindakan |
+### C13. Kode user `adm0001` / `stf0001` (menggantikan nomor urut)
+Setiap user punya kolom `kode`: admin = `adm0001`, `adm0002`, ...; staff = `stf0001`, ... Dibuat otomatis saat user ditambah; kalau role diubah, kode ikut berganti. ID angka tetap dipakai untuk edit, hapus, dan login.
+
+1. Model `User` di `prisma/schema.prisma`:
+```prisma
+model User {
+  id        Int      @id @default(autoincrement())
+  kode      String   @unique @db.VarChar(10)
+  fullname  String
+  email     String   @unique
+  password  String
+  role      String   @default("staff")
+  token     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+```
+2. File: `lib/user-code.ts` (baru), `lib/user-dto.ts`, `app/api/users/route.ts`, `app/api/users/[id]/route.ts`, `app/admin/user-management/page.tsx` (paket `kode-user.zip`).
+3. Database yang sudah berisi data, jalankan di tab **SQL**:
+```sql
+ALTER TABLE users ADD COLUMN kode VARCHAR(10) NULL AFTER id;
+
+UPDATE users u
+JOIN (
+  SELECT id,
+         CONCAT(IF(role = 'admin', 'adm', 'stf'),
+                LPAD(ROW_NUMBER() OVER (PARTITION BY role ORDER BY id), 4, '0')) AS kode
+  FROM users
+) x ON x.id = u.id
+SET u.kode = x.kode;
+
+ALTER TABLE users
+  MODIFY kode VARCHAR(10) NOT NULL,
+  ADD UNIQUE KEY users_kode_key (kode);
+```
+4. `npx prisma generate`, lalu restart `npm run dev`.
+
+### C14. Tabel `profile_company` ikut terbuat di project ukk
+**Penyebab:** `schema.prisma` memuat model `ProfileCompany` milik project profile-company.
+**Solusi:**
+```sql
+DROP TABLE IF EXISTS profile_company;
+```
+Lalu hapus blok `model ProfileCompany { ... }` dari `schema.prisma` dan jalankan `npx prisma generate`.
+
+### C15. "Unexpected end of JSON input", "Gagal memuat user", dan error kolom `kode`
+**Arti:** server menjawab error `500` dengan isi kosong, jadi `response.json()` gagal.
+**Rapikan pesan** (ada di `user-management/page.tsx` 2 tempat dan `form/user-form.tsx` 2 tempat):
+```tsx
+const result = await response.json().catch(() => ({}))
+```
+**Tampilkan error asli:** bungkus `GET`/`POST` di `app/api/users/route.ts` dengan `try/catch` (file `route.ts` dari paket).
+
+| Pesan | Penyebab | Solusi |
+|---|---|---|
+| `Unknown field kode for select statement on model User` | `schema.prisma` belum punya `kode`, atau belum `generate` | tambah baris `kode`, `npx prisma generate`, restart |
+| `column users.kode does not exist` (P2022) | tabel `users` belum punya kolom `kode` | jalankan SQL di C13 |
+| `table users does not exist` (P2021) | database belum di-import / `.env` menunjuk database lain | import SQL, cek `DATABASE_URL`, restart |
+| `P2039` / pool | MySQL belum menyala | nyalakan MySQL di XAMPP |
+| `Module not found @/lib/user-code` | `lib/user-code.ts` belum ada | ekstrak `kode-user.zip` ke root |
+
+Urutan aman setelah mengubah schema: **nyalakan MySQL, jalankan SQL, `npx prisma generate`, restart server.**
+
+### C16. Menambah user tanpa login
+`POST /api/users` menolak (401) kalau belum login. Dua cara:
+
+**Lewat database.** Buat `hash.js` di root:
+```js
+const { randomBytes, scryptSync } = require("node:crypto")
+const password = process.argv[2]
+if (!password) { console.log("Pemakaian: node hash.js passwordnya"); process.exit(1) }
+const salt = randomBytes(16)
+console.log(`scrypt:${salt.toString("hex")}:${scryptSync(password, salt, 64).toString("hex")}`)
+```
+```bat
+node hash.js passwordBaru123
+```
+Lalu di tab SQL:
+```sql
+INSERT INTO users (kode, fullname, email, password, role, created_at, updated_at)
+VALUES ('stf0002', 'Nama User', 'user@gmail.com', 'HASIL_HASH_JS', 'staff', NOW(3), NOW(3));
+```
+Kolom `updated_at` dan `kode` wajib diisi manual di SQL. Untuk mengganti password admin: `UPDATE users SET password = '...', token = NULL, updated_at = NOW(3) WHERE email = 'admin@gmail.com';`
+
+**Lewat route register** (`app/api/auth/register/route.ts`): kunci `role` ke `staff`, hash password dengan `hashUserPassword`, dan isi `kode` dengan `generateUserCode("staff")`. Siapa pun bisa membuat akun lewat route ini, jadi hapus kalau project dipublikasikan.
+
+### C17. Arti kolom "JWT" di tabel user
+Hanya penanda sesi login:
+- **Tersimpan** = user sedang punya sesi aktif (token ada di database).
+- **Belum ada** = user belum pernah login, atau sudah logout.
+Token dibuat saat login (bukan saat user ditambah), dan dikosongkan saat logout.
+
+### C18. Push semua file ke GitHub (supaya bisa `git clone`)
+1. `.gitignore`: biarkan `/node_modules`, `/.next/`; hapus `/src/generated`; supaya `.env` ikut terkirim:
+```
+.env*
+!.env
+```
+2. Buat repo kosong di github.com (tanpa README/.gitignore). Taruh `db_ukksmt3_rafiq.sql` di folder `database/`.
+3. Di folder project:
+```bat
+git init
+git add .
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/USERNAME/ukk-smt4.git
+git push -u origin main
+```
+4. Cek `.env` ikut: `git ls-files .env`
+5. Update berikutnya: `git add .` → `git commit -m "pesan"` → `git push`
+
+Masalah umum: `Author identity unknown` → `git config --global user.name "Nama"` dan `git config --global user.email "email@github.com"`. `remote origin already exists` → `git remote set-url origin URL`.
+
+> **Jadikan repo Private** kalau `.env` ikut terkirim. Di repo Public, siapa pun bisa membaca `JWT_SECRET` dan `DATABASE_URL`. Kalau pernah Public, buat `JWT_SECRET` baru.
+
+Yang clone: `git clone` → `npm install` → import SQL → `npx prisma generate` → `npm run dev`.
+
+### C19. Peringatan yang aman diabaikan
+| Peringatan | Tindakan |
 |---|---|
-| `GET /img/logo-mvp.jpg 404` | logo belum ada. Taruh file di `public/img/logo-mvp.jpg`. Tidak bikin error. |
-| `allow-scripts ... prisma, @prisma/engines` | npm menahan script instal. Jalankan `npm approve-scripts prisma` dan `npm approve-scripts @prisma/engines`. |
-| `20 vulnerabilities` dari `npm install` | jangan jalankan `npm audit fix --force`. Bisa merusak versi paket. Aman diabaikan untuk tugas UKK. |
-| `Slow filesystem detected` | hanya info kecepatan disk, abaikan. |
-| `Terminate batch job (Y/N)?` | muncul setelah Ctrl+C di Windows. Ketik `y`. |
+| `GET /img/logo-mvp.jpg 404` | taruh logo di `public/img/logo-mvp.jpg` (hanya logo sidebar yang kosong) |
+| `20 vulnerabilities` saat `npm install` | jangan `npm audit fix --force` (bisa merusak versi paket) |
+| `Slow filesystem detected` | info kecepatan disk saja |
+| `allow-scripts ... prisma` | `npm approve-scripts prisma` dan `npm approve-scripts @prisma/engines` |
 
 ---
 
-## 14. Kondisi akhir & checklist
-
-### Struktur file penting
-
+## D. Struktur file penting
 ```
 ukk-smt4/
-├─ .env                                  (DATABASE_URL, JWT_SECRET)
+├─ .env                         (DATABASE_URL, JWT_SECRET)
 ├─ next.config.mjs
 ├─ prisma.config.ts
-├─ prisma/schema.prisma                  (model User -> tabel "users")
-├─ src/generated/prisma/                 (hasil `npx prisma generate`)
+├─ prisma/schema.prisma         (User -> "users", Category, Jurusan)
+├─ src/generated/prisma/        (hasil npx prisma generate)
+├─ database/db_ukksmt3_rafiq.sql
 ├─ lib/
-│  ├─ prisma.ts
-│  ├─ auth.ts
-│  ├─ user-security.ts                   (hash scrypt + JWT)
-│  └─ user-dto.ts
+│  ├─ prisma.ts, auth.ts, user-security.ts, user-dto.ts, user-code.ts
 └─ app/
-   ├─ admin/layout.tsx                   (AdminUserProvider + AdminShell)
+   ├─ layout.tsx                (judul tab)
+   ├─ admin/layout.tsx          (AdminUserProvider + AdminShell)
+   ├─ admin/user-management/    (page.tsx, form/)
    ├─ components/navigation-menu/header.tsx   (dropdown avatar + Keluar)
    └─ api/
-      ├─ auth/login/route.ts
-      ├─ auth/logout/route.ts
+      ├─ auth/login/route.ts, auth/logout/route.ts
       └─ users/route.ts, users/[id]/route.ts
 ```
 
-### Checklist sebelum selesai
+### Isi `prisma.config.ts`
+```ts
+import "dotenv/config"
+import { defineConfig, env } from "prisma/config"
 
-- [ ] Hapus semua `console.log("[LOGIN] ...")` dari `app/api/auth/login/route.ts`
-- [ ] Hapus `lib/mock-users.ts` kalau masih ada
-- [ ] Hapus tabel `tbl_users` di phpMyAdmin (tidak dipakai)
-- [ ] Taruh logo di `public/img/logo-mvp.jpg`
-- [ ] Isi halaman `categories`, `jurusan`, `profile`, dan `admin/page.tsx` (dashboard)
-- [ ] Ganti password admin `123456` kalau project dipublikasikan
-- [ ] Pastikan `.env` tidak ikut di-commit/upload (`.gitignore`)
+export default defineConfig({
+  schema: "prisma/schema.prisma",
+  migrations: { path: "prisma/migrations" },
+  datasource: { url: env("DATABASE_URL") },
+})
+```
 
-### Cara jalan sehari-hari
+## E. Checklist
+- [ ] MySQL XAMPP menyala sebelum `npm run dev`
+- [ ] `.env` ada dan `DATABASE_URL` menunjuk `db_ukksmt3_rafiq`
+- [ ] `schema.prisma` punya `kode`, tidak ada `ProfileCompany`
+- [ ] Tabel `users` punya kolom `kode`; tabel `profile_company` sudah dihapus
+- [ ] `npx prisma generate` sudah dijalankan setelah schema berubah
+- [ ] `console.log("[LOGIN] ...")` sudah dihapus dari route login
+- [ ] `lib/mock-users.ts` dan tabel `tbl_users` lama sudah dihapus (kalau masih ada)
+- [ ] Logo ada di `public/img/logo-mvp.jpg`
+- [ ] Repo GitHub **Private** kalau `.env` ikut terkirim
+- [ ] Ganti password admin sebelum project dipublikasikan
 
-1. Nyalakan MySQL di XAMPP.
-2. Buka terminal di `D:\ukk_smt4\ukk-smt4` (cek prompt!).
-3. `npm run dev`, lalu buka `http://localhost:3000`.
-4. Login `admin@gmail.com` / `123456`.
+## F. Shortcut VS Code
+| Aksi | Windows |
+|---|---|
+| Comment / uncomment baris | `Ctrl + /` |
+| Comment blok `/* ... */` | `Shift + Alt + A` |
+| Cari di semua file | `Ctrl + Shift + F` |
+| Sembunyikan sidebar VS Code | `Ctrl + B` |
 
-### Kalau ada error baru
-
-Kirim: (1) pesan error lengkap dari terminal, mulai baris `Error:` atau `⨯`, (2) path file yang disebut error, (3) isi file itu. Tiga hal itu biasanya cukup untuk menemukan penyebabnya. --> -->
+## G. Kalau ada error baru
+Kirim: (1) pesan error lengkap dari terminal mulai baris `Error:` atau `⨯`, (2) path file yang disebut, (3) isi file itu. -->

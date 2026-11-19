@@ -36,7 +36,7 @@ export function UserForm({ userId }: UserFormProps) {
     async function loadUser() {
       try {
         const response = await fetch(`/api/users/${userId}`)
-        const result = await response.json()
+        const result = await response.json().catch(() => ({}))
         if (!response.ok) throw new Error(result.error ?? "Gagal memuat user.")
 
         if (isActive) {
@@ -75,7 +75,7 @@ export function UserForm({ userId }: UserFormProps) {
           role,
         }),
       })
-      const result = await response.json()
+      const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result.error ?? "Gagal menyimpan user.")
       router.push("/admin/user-management")
     } catch (saveError) {
