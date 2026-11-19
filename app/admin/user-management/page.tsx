@@ -25,6 +25,7 @@ import {
 
 type ManagedUser = {
     id: number
+    kode: string
     fullname: string
     email: string
     role: string
@@ -46,15 +47,15 @@ export default function UserManagementPage() {
         setIsLoading(true)
         setError("")
         try {
-            const response = await fetch(`/api/users?page=${page}&pageSize=${PAGE_SIZE}`)
-            const result = await response.json()
-            if (!response.ok) throw new Error(result.error ?? "Gagal memuat user.")
-            setUsers(result.users)
-            setTotalUsers(result.pagination.totalUsers)
-            setCurrentPage(result.pagination.page)
-        } catch (loadError) {
-            setError(loadError instanceof Error ? loadError.message : "Gagal memuat user.")
-        } finally {
+    const response = await fetch(`/api/users?page=${page}&pageSize=${PAGE_SIZE}`)
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(result.error ?? "Gagal memuat user.")
+    setUsers(result.users)
+    setTotalUsers(result.pagination.totalUsers)
+    setCurrentPage(result.pagination.page)
+} catch (loadError) {
+    setError(loadError instanceof Error ? loadError.message : "Gagal memuat user.")
+} finally {
             setIsLoading(false)
         }
     }
@@ -73,7 +74,7 @@ export default function UserManagementPage() {
         setError("")
         try {
             const response = await fetch(`/api/users/${user.id}`, { method: "DELETE" })
-            const result = await response.json()
+            const result = await response.json().catch(() => ({}))
             if (!response.ok) throw new Error(result.error ?? "Gagal menghapus user.")
             if (users.length === 1 && currentPage > 1) {
                 goToPage(currentPage - 1)
@@ -106,7 +107,7 @@ export default function UserManagementPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>ID</TableHead>
+                            <TableHead className="w-24">Kode</TableHead>
                             <TableHead>Nama lengkap</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Role</TableHead>
@@ -122,7 +123,7 @@ export default function UserManagementPage() {
                             <TableRow><TableCell colSpan={7} className="text-center">Belum ada user.</TableCell></TableRow>
                         ) : users.map((user) => (
                             <TableRow key={user.id}>
-                                <TableCell>{user.id}</TableCell>
+                                <TableCell>{user.kode}</TableCell>
                                 <TableCell className="font-medium">{user.fullname}</TableCell>
                                 <TableCell>{user.email}</TableCell>
                                 <TableCell className="capitalize">{user.role}</TableCell>
